@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Search from '../Search';
 import Modal from './Modal';
-import stockItems from '@/pages/api/Produtos';
 import { FiEdit, FiTrash2 } from "react-icons/fi";
+import { deleteStockItem, fetchStockItems } from '../../api/apiService'; // Importe suas funções da API
 
-// Interface para os itens de estoque
 interface StockItem {
   id: number;
   name: string;
@@ -14,13 +13,39 @@ interface StockItem {
 
 const StockListPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalInitialItem, setModalInitialItem] = useState<StockItem | undefined>(undefined);
+  const [stockItems, setStockItems] = useState<StockItem[]>([]);
 
-  const openModal = () => {
+  useEffect(() => {
+    async function fetchItems() {
+      const items = await fetchStockItems();
+      setStockItems(items);
+    }
+    fetchItems();
+  }, []); // Chama apenas uma vez ao carregar o componente
+
+  const openModal = (item?: StockItem) => {
     setIsModalOpen(true);
+    setModalInitialItem(item); // Define o item inicial para edição
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setModalInitialItem(undefined); // Limpa o item inicial ao fechar o modal
+  };
+
+  // Função para lidar com a exclusão de um item de estoque
+  const handleDelete = async (itemId: number) => {
+    try {
+      await deleteStockItem(itemId);
+      // Atualizar a lista de itens de estoque após a exclusão
+      const updatedItems = stockItems.filter(item => item.id !== itemId);
+      setStockItems(updatedItems);
+      console.log(`Item ${itemId} deletado com sucesso.`);
+    } catch (error) {
+      console.error(`Erro ao deletar item ${itemId}:`, error);
+      // Aqui você pode lidar com o erro, se necessário
+    }
   };
 
   return (
@@ -29,7 +54,7 @@ const StockListPage: React.FC = () => {
       
       {/* Botão de adicionar novo item */}
       <div
-        onClick={openModal}
+        onClick={() => openModal()}
         className="flex items-center justify-center w-6 h-6.5 mb-2 font-bold text-white bg-blue-500 rounded-md cursor-pointer hover:bg-blue-700"
       >
         +
@@ -77,10 +102,16 @@ const StockListPage: React.FC = () => {
                 </td>
                 <td className="text-left px-6 py-4 whitespace-no-wrap border-b border-gray-200">
                   <div className="flex">
-                    <div className="mr-4 text-blue-500 cursor-pointer hover:text-blue-700">
+                    <div
+                      onClick={() => openModal(item)} // Abre o modal com o item para edição
+                      className="mr-4 text-blue-500 cursor-pointer hover:text-blue-700"
+                    >
                       <FiEdit />
                     </div>
-                    <div className="text-red-500 cursor-pointer hover:text-red-700">
+                    <div
+                      onClick={() => handleDelete(item.id)}
+                      className="text-red-500 cursor-pointer hover:text-red-700"
+                    >
                       <FiTrash2 />
                     </div>
                   </div>
@@ -91,10 +122,10 @@ const StockListPage: React.FC = () => {
         </table>
       </div>
 
-      {/* Modal para cadastrar novo item */}
+      {/* Modal para cadastrar ou editar item */}
       {isModalOpen && (
         <div className="fixed top-0 left-0 w-full h-full bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
-          <Modal isOpen={isModalOpen} onClose={closeModal} />
+          <Modal isOpen={isModalOpen} onClose={closeModal} initialItem={modalInitialItem} />
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
+import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import Search from '../Search';
-import stockItems from '@/pages/api/Produtos';
+import { fetchStockItems, createSale } from '../../api/apiService';
+import Cart from '../Cart'; // Importa o componente Cart aqui
 
 interface Product {
   id: number;
@@ -11,12 +12,31 @@ interface Product {
 
 const SalesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [products, setProducts] = useState<Product[]>(stockItems);
+  const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Product[]>([]);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const stockItems = await fetchStockItems();
+        setProducts(stockItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        })));
+      } catch (error) {
+        console.error('Erro ao buscar itens de estoque:', error);
+      }
+    }
+
+    fetchProducts();
+  }, []);
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
+  
 
   const handleAddToCart = (product: Product) => {
     const isInCart = cart.find(item => item.id === product.id);
@@ -45,15 +65,30 @@ const SalesPage: React.FC = () => {
       setCart(updatedCart);
     }
   };
-
-  const handleSaleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSaleSubmit = async () => {
+    if (cart.length === 0) {
+      alert('Adicione itens ao carrinho antes de finalizar a venda.');
+      return;
+    }
+  
     const totalSale = cart.reduce((total, item) => total + item.price * item.quantity, 0);
-    console.log("Venda realizada:", cart);
-    console.log("Valor total da venda:", totalSale.toFixed(2));
-    setCart([]);
+  
+    try {
+      const firstProductNameInCart = cart[0].name;
+      await createSale(firstProductNameInCart, cart.length, totalSale);
+      
+      console.log("Venda realizada:", cart);
+      console.log("Valor total da venda:", totalSale.toFixed(2));
+      setCart([]);
+      alert('Venda realizada com sucesso!');
+      
+      // Atualiza a página após a venda ser finalizada
+      window.location.reload();
+    } catch (error) {
+      console.error('Erro ao realizar venda:', error);
+      alert('Erro ao realizar venda. Por favor, tente novamente.');
+    }
   };
-
   // Filtra os produtos com base no searchTerm
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -64,7 +99,7 @@ const SalesPage: React.FC = () => {
       <h1 className="text-2xl font-bold mb-4">Página de Vendas</h1>
 
       {/* Formulário de Pesquisa */}
-      <Search/>
+      <Search />
 
       {/* Tabela de Produtos */}
       <table className="min-w-full divide-y divide-gray-200 mt-4">
@@ -113,39 +148,8 @@ const SalesPage: React.FC = () => {
 
       {/* Carrinho de Compras */}
       <div className="mt-4">
-        <h2 className="text-xl font-bold mb-2">Carrinho de Compras ({cart.reduce((total, item) => total + item.quantity, 0)})</h2>
-        <ul className="divide-y divide-gray-200">
-          {cart.map((item) => (
-            <li key={item.id} className="flex items-center justify-between px-4 py-2">
-              <div>{item.name}</div>
-              <div className="flex items-center">
-                <button
-                  onClick={() => handleRemoveFromCart(item)}
-                  className="mr-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-700"
-                >
-                  -
-                </button>
-                <span className="px-2">{item.quantity}</span>
-                <button
-                  onClick={() => handleAddToCart(item)}
-                  className="ml-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-700"
-                >
-                  +
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-        {cart.length > 0 && (
-          <div className="mt-4">
-            <p className="text-lg font-semibold">Total da Venda: R$ {cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2)}</p>
-            <form onSubmit={handleSaleSubmit} className="mt-4">
-              <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-700">
-                Finalizar Venda
-              </button>
-            </form>
-          </div>
-        )}
+        {/* Passando as props para o componente Cart */}
+        <Cart cart={cart} handleAddToCart={handleAddToCart} handleRemoveFromCart={handleRemoveFromCart} onSubmit={handleSaleSubmit} />
       </div>
     </div>
   );

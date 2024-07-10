@@ -1,11 +1,25 @@
 const API_URL = 'http://localhost:5000/api'; // URL da sua API
 
 // Interface para o objeto de venda
-interface Sale {
+export interface Sale {
   id: number;
   productName: string;
   quantity: number;
   totalPrice: number;
+  Client: {
+    id: number;
+    name: string;
+    contact: string;
+    address: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  Product: {
+    id: number;
+    name: string;
+    price: number;
+    // outros campos do produto, se necessário
+  };
 }
 
 // Interface para o objeto de item de estoque
@@ -104,25 +118,20 @@ export async function deleteStockItem(id: number): Promise<void> {
 }
 
 // Função para atualizar um item de estoque
-export async function updateStockItem(itemId: number, updatedData: Partial<StockItem>): Promise<StockItem | null> {
-  try {
-    const response = await fetch(`${API_URL}/stock-items/${itemId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatedData),
-    });
+export async function updateStockItem(id: number, name: string, quantity: number, price: number) {
+  // Implementação da lógica para atualizar o item de estoque na API
+  // Exemplo fictício:
+  const response = await fetch(`${API_URL}/stock-items/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name, quantity, price }),
+  });
 
-    if (!response.ok) {
-      const errorMessage = await response.json();
-      throw new Error(errorMessage.error || 'Erro ao atualizar item de estoque');
-    }
-
-    const updatedItem: StockItem = await response.json();
-    return updatedItem;
-  } catch (error) {
-    console.error('Erro ao atualizar item de estoque:', error);
-    return null;
+  if (!response.ok) {
+    throw new Error('Erro ao atualizar o item de estoque.');
   }
+
+  return await response.json();
 }

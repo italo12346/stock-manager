@@ -3,7 +3,7 @@ import { FaCartArrowDown, FaBoxOpen, FaUser, FaHistory } from 'react-icons/fa';
 import SalesPage from '../Sell';
 import StockListPage from '../Stock';
 import SettingsPage from '../Search';
-import AboutPage from '../Search';
+import HistoryPage from '../History';
 
 const NavigationButtons = () => {
   const [currentPage, setCurrentPage] = useState<string>('');
@@ -27,21 +27,21 @@ const NavigationButtons = () => {
           Vendas
         </button>
         <button
-          onClick={() => changePage('profile')}
+          onClick={() => changePage('stock')}
           className={`flex items-center bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded`}
         >
           <FaBoxOpen className="mr-2" />
           Estoque
         </button>
         <button
-          onClick={() => changePage('settings')}
+          onClick={() => changePage('client')}
           className={`flex items-center bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded`}
         >
           <FaUser className="mr-2" />
           Clientes
         </button>
         <button
-          onClick={() => changePage('about')}
+          onClick={() => changePage('history')}
           className={`flex items-center bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded`}
         >
           <FaHistory className="mr-2" />
@@ -53,14 +53,14 @@ const NavigationButtons = () => {
         <div className={`mt-4 ${isActive('sales')}`}>
           <SalesPage />
         </div>
-        <div className={`mt-4 ${isActive('profile')}`}>
+        <div className={`mt-4 ${isActive('stock')}`}>
           <StockListPage />
         </div>
         <div className={`mt-4 ${isActive('settings')}`}>
           <SettingsPage />
         </div>
-        <div className={`mt-4 ${isActive('about')}`}>
-          <AboutPage />
+        <div className={`mt-4 ${isActive('history')}`}>
+          <HistoryPage />
         </div>
       </div>
     </div>

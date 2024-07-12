@@ -11,9 +11,10 @@ const StockListPage: React.FC = () => {
   const [stockItems, setStockItems] = useState<StockItem[]>([]); // Estado para armazenar os itens de estoque
   const [itemToEdit, setItemToEdit] = useState<StockItem | undefined>(undefined); // Estado para o item a ser editado
   const [currentPage, setCurrentPage] = useState(1); // Estado para controlar a página atual da lista
+  const [searchTerm, setSearchTerm] = useState<string>(''); // Estado para armazenar o termo de pesquisa
   const itemsPerPage = 7; // Quantidade de itens por página
 
-  // Efeito para buscar os itens de estoque ao montar o componente
+  // Efeito para buscar os itens de estoque ao montar o componente ou quando o termo de pesquisa mudar
   useEffect(() => {
     async function fetchItems() {
       const items = await fetchStockItems(); // Função para buscar os itens da API
@@ -53,10 +54,15 @@ const StockListPage: React.FC = () => {
     setIsModalOpen(true); // Abre o modal de edição
   };
 
+  // Filtragem dos itens com base no termo de pesquisa
+  const filteredItems = stockItems.filter(item =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   // Cálculo para paginação: número total de páginas e itens visíveis na página atual
-  const totalPages = Math.ceil(stockItems.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const visibleItems = stockItems.slice(startIndex, startIndex + itemsPerPage);
+  const visibleItems = filteredItems.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className={`container mx-auto px-4 py-8`}>
@@ -71,7 +77,7 @@ const StockListPage: React.FC = () => {
       </div>
 
       {/* Componente de busca */}
-      <Search />
+      <Search setSearchTerm={setSearchTerm} />
 
       {/* Tabela de estoque */}
       <div className="overflow-x-auto">

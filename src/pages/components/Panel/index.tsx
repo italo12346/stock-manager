@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { FaCartArrowDown, FaBoxOpen, FaUser, FaHistory } from 'react-icons/fa';
 import SalesPage from '../Sell';
 import StockListPage from '../Stock';
-import SettingsPage from '../Search';
 import HistoryPage from '../History';
+import ClientPage from '../Client';
 
 const NavigationButtons = () => {
   const [currentPage, setCurrentPage] = useState<string>('');
@@ -56,8 +56,8 @@ const NavigationButtons = () => {
         <div className={`mt-4 ${isActive('stock')}`}>
           <StockListPage />
         </div>
-        <div className={`mt-4 ${isActive('settings')}`}>
-          <SettingsPage />
+        <div className={`mt-4 ${isActive('client')}`}>
+          <ClientPage />
         </div>
         <div className={`mt-4 ${isActive('history')}`}>
           <HistoryPage />

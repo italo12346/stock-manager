@@ -1,7 +1,8 @@
+
 import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
-import Search from '../Search';
-import { fetchStockItems, createSale } from '../../api/apiService';
-import Cart from '../Cart'; // Importa o componente Cart aqui
+import { fetchStockItems, createSale, fetchClients } from '../../api/apiService';
+import { Client } from '../../types/Client';
+import Cart from '../Cart';
 
 interface Product {
   id: number;
@@ -14,9 +15,11 @@ const SalesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Product[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   useEffect(() => {
-    async function fetchProducts() {
+    async function fetchData() {
       try {
         const stockItems = await fetchStockItems();
         setProducts(stockItems.map(item => ({
@@ -25,18 +28,21 @@ const SalesPage: React.FC = () => {
           price: item.price,
           quantity: item.quantity
         })));
+
+        // Aqui você pode buscar os clientes
+        const clientsData = await fetchClients();
+        setClients(clientsData);
       } catch (error) {
-        console.error('Erro ao buscar itens de estoque:', error);
+        console.error('Erro ao buscar itens de estoque ou clientes:', error);
       }
     }
 
-    fetchProducts();
+    fetchData();
   }, []);
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
-  
 
   const handleAddToCart = (product: Product) => {
     const isInCart = cart.find(item => item.id === product.id);
@@ -65,30 +71,44 @@ const SalesPage: React.FC = () => {
       setCart(updatedCart);
     }
   };
+
+  const handleClientChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const clientId = parseInt(event.target.value);
+    const client = clients.find(client => client.id === clientId);
+    setSelectedClient(client || null);
+  };
+
   const handleSaleSubmit = async () => {
     if (cart.length === 0) {
       alert('Adicione itens ao carrinho antes de finalizar a venda.');
       return;
     }
-  
+
+    if (!selectedClient) {
+      alert('Selecione um cliente antes de finalizar a venda.');
+      return;
+    }
+
     const totalSale = cart.reduce((total, item) => total + item.price * item.quantity, 0);
-  
+
     try {
-      const firstProductNameInCart = cart[0].name;
-      await createSale(firstProductNameInCart, cart.length, totalSale);
-      
+      // Aqui você passa o nome do primeiro produto no carrinho e o ID do cliente selecionado
+      await createSale(cart[0].name, cart.length, totalSale, selectedClient.id);
+
       console.log("Venda realizada:", cart);
       console.log("Valor total da venda:", totalSale.toFixed(2));
       setCart([]);
       alert('Venda realizada com sucesso!');
-      
-      // Atualiza a página após a venda ser finalizada
-      window.location.reload();
+      window.location.reload()
+
+      // Atualiza a página após a venda ser finalizada (opcional)
+      // window.location.reload();
     } catch (error) {
       console.error('Erro ao realizar venda:', error);
       alert('Erro ao realizar venda. Por favor, tente novamente.');
     }
   };
+
   // Filtra os produtos com base no searchTerm
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -99,10 +119,21 @@ const SalesPage: React.FC = () => {
       <h1 className="text-2xl font-bold mb-4">Página de Vendas</h1>
 
       {/* Formulário de Pesquisa */}
-      <Search />
+      <div className="mb-4">
+        <label htmlFor="search" className="block text-sm font-medium text-gray-700">
+          Pesquisar Produto
+        </label>
+        <input
+          type="text"
+          id="search"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="mt-1 px-3 py-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        />
+      </div>
 
       {/* Tabela de Produtos */}
-      <table className="min-w-full divide-y divide-gray-200 mt-4">
+      <table className="min-w-full divide-y divide-gray-200 mb-4">
         <thead className="bg-gray-50">
           <tr>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -146,13 +177,29 @@ const SalesPage: React.FC = () => {
         </tbody>
       </table>
 
-      {/* Carrinho de Compras */}
-      <div className="mt-4">
-        {/* Passando as props para o componente Cart */}
-        <Cart cart={cart} handleAddToCart={handleAddToCart} handleRemoveFromCart={handleRemoveFromCart} onSubmit={handleSaleSubmit} />
+      {/* Seleção de Cliente */}
+      <div className="mb-4">
+        <label htmlFor="client" className="block text-sm font-medium text-gray-700">
+         <h3> Selecionar Cliente</h3>
+        </label>
+        <select
+          id="client"
+          value={selectedClient ? selectedClient.id.toString() : ''}
+          onChange={handleClientChange}
+          className="bg-gray-200 mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500  rounded-md"
+        >
+          <option value="">Selecione um cliente</option>
+          {clients.map(client => (
+            <option key={client.id} value={client.id.toString()}>{client.name}</option>
+          ))}
+        </select>
       </div>
+
+      {/* Carrinho de Compras */}
+      <Cart cart={cart} handleAddToCart={handleAddToCart} handleRemoveFromCart={handleRemoveFromCart} onSubmit={handleSaleSubmit} />
     </div>
   );
 };
 
 export default SalesPage;
+

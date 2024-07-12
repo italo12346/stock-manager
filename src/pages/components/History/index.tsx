@@ -1,45 +1,72 @@
 import React, { useEffect, useState } from 'react';
-import { fetchSales, Sale } from '../../api/apiService'; // Substitua pelo caminho correto do seu arquivo
+import { fetchSales } from '../../api/apiService';
+import { Sale } from '@/pages/types/Sale';
 
 const HistoryPage: React.FC = () => {
-    const [sales, setSales] = useState<Sale[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const salesData = await fetchSales();
-                setSales(salesData);
-            } catch (error) {
-                console.error('Erro ao buscar vendas:', error);
-            }
-        };
+  useEffect(() => {
+    async function fetchSalesData() {
+      try {
+        const salesData = await fetchSales();
+        setSales(salesData);
+      } catch (error) {
+        console.error('Erro ao buscar vendas:', error);
+      }
+    }
 
-        fetchData();
-    }, []);
+    fetchSalesData();
+  }, []);
 
-    return (
-        <div className="history p-6">
-            <h1 className="text-2xl font-bold mb-4">Lista de Vendas</h1>
-            <ul>
-                {sales.map((sale) => (
-                    <li key={sale.id} className="border-b border-gray-200 py-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-lg font-semibold">{sale.productName}</p>
-                                <p className="text-sm text-gray-600">Preço: R$ {sale.totalPrice}</p>
-                                <p className="text-sm text-gray-600">Quantidade: {sale.quantity}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-600">Cliente: {sale.Client.name}</p>
-                                <p className="text-sm text-gray-600">Produto: {sale.Product.name}</p>
-                                <p className="text-sm text-gray-600">Preço do Produto: R$ {sale.Product.price}</p>
-                            </div>
-                        </div>
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-4">Histórico de Vendas</h1>
+
+      {/* Tabela de Vendas */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Produto
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Quantidade
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Preço Total
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Cliente
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                ID do Produto
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Quantidade do Produto
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Preço do Produto
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {sales.map((sale) => (
+              <tr key={sale.id}>
+                <td className="px-6 py-4 whitespace-nowrap">{sale.productName}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{sale.quantity}</td>
+                <td className="px-6 py-4 whitespace-nowrap">R$ {sale.totalPrice.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{sale.Client?.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{sale.Product?.id}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{sale.Product?.quantity}</td>
+                <td className="px-6 py-4 whitespace-nowrap">R$ {sale.Product?.price.toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 };
 
 export default HistoryPage;

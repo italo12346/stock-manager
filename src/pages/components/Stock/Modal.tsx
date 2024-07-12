@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { AiOutlineClose } from 'react-icons/ai';
 import { createStockItem, updateStockItem } from '../../api/apiService'; // Importe a função updateStockItem da sua API
+
 export interface StockItem {
   id: number;
   name: string;
